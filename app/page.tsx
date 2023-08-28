@@ -7,6 +7,20 @@ import { useEffect, useState } from "react";
 export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
 
+  // error handling
+  const [addError, setAddError] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Function to clear errors after a timeout
+  const clearErrorsAfterTimeout = () => {
+    setTimeout(() => {
+      setAddError(null);
+      setUpdateError(null);
+      setDeleteError(null);
+    }, 5000); // Adjust the timeout duration as needed (in milliseconds)
+  };
+
   // new user
   const [newUser, setNewUser] = useState<User>({
     name: "",
@@ -83,6 +97,8 @@ export default function Home() {
         } as User);
       } else {
         console.error("Failed to add user");
+        setAddError("An error occurred while adding the user.");
+        clearErrorsAfterTimeout();
       }
       setIsModalOpen(false);
     } catch (error) {
@@ -110,9 +126,13 @@ export default function Home() {
         setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
       } else {
         console.error("Failed to delete user");
+        setDeleteError("An error occurred while deleting the user.");
+        clearErrorsAfterTimeout();
       }
     } catch (error) {
       console.error("Error deleting user:", error);
+      setDeleteError("An error occurred while deleting the user.");
+      clearErrorsAfterTimeout();
     }
   };
 
@@ -148,9 +168,13 @@ export default function Home() {
       } else {
         console.error("Failed to update user");
         setIsModalOpen(false); // Close the modal after updating user
+        setUpdateError("An error occurred while updating the user.");
+        clearErrorsAfterTimeout();
       }
     } catch (error) {
       console.error("Error updating user:", error);
+      setUpdateError("An error occurred while updating the user.");
+      clearErrorsAfterTimeout();
     }
     setEditedUser({} as User); // Reset editedUser to an empty object
   };
@@ -344,6 +368,27 @@ export default function Home() {
                 {isEditing ? "Update" : "Add"}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+      {addError && (
+        <div className="modal">
+          <div className="modal-content">
+            <p className="text-red-600">{addError}</p>
+          </div>
+        </div>
+      )}
+      {updateError && (
+        <div className="modal">
+          <div className="modal-content">
+            <p className="text-red-600">{updateError}</p>
+          </div>
+        </div>
+      )}
+      {deleteError && (
+        <div className="modal">
+          <div className="modal-content">
+            <p className="text-red-600">{deleteError}</p>
           </div>
         </div>
       )}
