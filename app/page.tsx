@@ -74,8 +74,30 @@ export default function Home() {
     }
   };
 
+  // delete user
+  const handleDeleteUser = async (userId: number, e: { preventDefault: () => void; }) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(
+        `https://jsonplaceholder.typicode.com/users/${userId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (response.ok) {
+        // Remove the deleted user from the users list
+        setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
+      } else {
+        console.error("Failed to delete user");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
   return (
-    <main className="bg-white h-full px-4">
+    <main className="bg-white h-full md:h-full px-4">
       <div className="flex justify-between py-4 px-4 items-center">
         <h1 className="text-black font-bold">Users</h1>
 
@@ -88,7 +110,27 @@ export default function Home() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-4 pb-4">
         {users.map((user) => (
-          <UserItem key={user.id} user={user} />
+          <div key={user.id} className="p-4 bg-blue-400 rounded-md">
+            <p>
+              Name: {user.name} @{user.username}
+            </p>
+            <p>Email: {user.email}</p>
+            <p>Phone: {user.phone}</p>
+            <p>Company: {user.company.name}</p>
+            <p>
+              Address: {user.address.street}, {user.address.city}
+            </p>
+            <div className="flex justify-between">
+              <button className="bg-yellow-500 rounded-md px-8 py-1 mt-2">
+                Edit
+              </button>
+              <button className="bg-red-600 rounded-md px-8 py-1 mt-2"
+                onClick={(e) => handleDeleteUser(user.id, e)}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ))}
       </div>
 
