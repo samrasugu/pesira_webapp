@@ -23,6 +23,23 @@ export default function Home() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // whether editing or adding new user
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [editedUser, setEditedUser] = useState<User>({
+    id: 0,
+    name: "",
+    username: "",
+    email: "",
+    phone: "",
+    company: {
+      name: "",
+    },
+    address: {
+      street: "",
+    },
+  } as User); // Declare and initialize editedUser
+
   useEffect(() => {
     fetch("https://jsonplaceholder.typicode.com/users")
       .then((response) => response.json())
@@ -75,7 +92,10 @@ export default function Home() {
   };
 
   // delete user
-  const handleDeleteUser = async (userId: number, e: { preventDefault: () => void; }) => {
+  const handleDeleteUser = async (
+    userId: number,
+    e: { preventDefault: () => void }
+  ) => {
     e.preventDefault();
     try {
       const response = await fetch(
@@ -96,6 +116,45 @@ export default function Home() {
     }
   };
 
+  // update user
+  // function to update a user's information
+  const handleUpdateUser = async (
+    updatedUser: User,
+    e: { preventDefault: () => void }
+  ) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(
+        `https://jsonplaceholder.typicode.com/users/${updatedUser.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedUser),
+        }
+      );
+
+      if (response.ok) {
+        // Update the user's information in the users list
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.id === updatedUser.id ? updatedUser : user
+          )
+        );
+        setIsModalOpen(false); // Close the modal after updating user\
+        // reset edited user
+        setEditedUser({} as User);
+      } else {
+        console.error("Failed to update user");
+        setIsModalOpen(false); // Close the modal after updating user
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
+    setEditedUser({} as User); // Reset editedUser to an empty object
+  };
+
   return (
     <main className="bg-white h-full md:h-full px-4">
       <div className="flex justify-between py-4 px-4 items-center">
@@ -103,7 +162,10 @@ export default function Home() {
 
         <button
           className="bg-green-600 rounded-md px-8 py-1 mt-2"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setIsModalOpen(true);
+            setEditedUser({} as User);
+          }}
         >
           Add User
         </button>
@@ -121,10 +183,18 @@ export default function Home() {
               Address: {user.address.street}, {user.address.city}
             </p>
             <div className="flex justify-between">
-              <button className="bg-yellow-500 rounded-md px-8 py-1 mt-2">
+              <button
+                className="bg-yellow-500 rounded-md px-8 py-1 mt-2"
+                onClick={() => {
+                  setIsModalOpen(true);
+                  setIsEditing(true);
+                  setEditedUser(user);
+                }}
+              >
                 Edit
               </button>
-              <button className="bg-red-600 rounded-md px-8 py-1 mt-2"
+              <button
+                className="bg-red-600 rounded-md px-8 py-1 mt-2"
                 onClick={(e) => handleDeleteUser(user.id, e)}
               >
                 Delete
@@ -141,9 +211,17 @@ export default function Home() {
             <span className="close" onClick={() => setIsModalOpen(false)}>
               &times;
             </span>
-            <h2 className="text-black font-semibold mb-4">Add User</h2>
+            <h2 className="text-black font-semibold mb-4">
+              {isEditing ? "Edit User" : "Add User"}
+            </h2>
             <form
-              onSubmit={handleAddUser}
+              onSubmit={(e) => {
+                if (isEditing && editedUser) {
+                  handleUpdateUser(editedUser, e); // Only update if editedUser is not null
+                } else {
+                  handleAddUser(e);
+                }
+              }}
               className="text-black flex flex-col gap-3 md:px-40"
             >
               <label htmlFor="name">Name:</label>
@@ -151,9 +229,14 @@ export default function Home() {
                 type="text"
                 className="border-2 border-gray-400 rounded-md px-2 py-1 focus:outline-none focus:border-blue-400"
                 id="name"
-                value={newUser.name}
+                value={newUser.name || editedUser?.name || ""}
                 onChange={(e) =>
-                  setNewUser({ ...newUser, name: e.target.value })
+                  isEditing
+                    ? setEditedUser({
+                        ...editedUser,
+                        name: e.target.value,
+                      })
+                    : setNewUser({ ...newUser, name: e.target.value })
                 }
                 required
               />
@@ -162,9 +245,14 @@ export default function Home() {
                 type="text"
                 className="border-2 border-gray-400 rounded-md px-2 py-1 focus:outline-none focus:border-blue-400"
                 id="username"
-                value={newUser.username}
+                value={newUser.username || editedUser?.username || ""}
                 onChange={(e) =>
-                  setNewUser({ ...newUser, username: e.target.value })
+                  isEditing
+                    ? setEditedUser({
+                        ...editedUser,
+                        username: e.target.value,
+                      })
+                    : setNewUser({ ...newUser, username: e.target.value })
                 }
                 required
               />
@@ -173,9 +261,14 @@ export default function Home() {
                 type="text"
                 className="border-2 border-gray-400 rounded-md px-2 py-1 focus:outline-none focus:border-blue-400"
                 id="email"
-                value={newUser.email}
+                value={newUser.email || editedUser?.email || ""}
                 onChange={(e) =>
-                  setNewUser({ ...newUser, email: e.target.value })
+                  isEditing
+                    ? setEditedUser({
+                        ...editedUser,
+                        email: e.target.value,
+                      })
+                    : setNewUser({ ...newUser, email: e.target.value })
                 }
                 required
               />
@@ -184,9 +277,14 @@ export default function Home() {
                 type="text"
                 className="border-2 text-black border-gray-400 rounded-md px-2 py-1 focus:outline-none focus:border-blue-400"
                 id="phone"
-                value={newUser.phone}
+                value={newUser.phone || editedUser?.phone || ""}
                 onChange={(e) =>
-                  setNewUser({ ...newUser, phone: e.target.value })
+                  isEditing
+                    ? setEditedUser({
+                        ...editedUser,
+                        phone: e.target.value,
+                      })
+                    : setNewUser({ ...newUser, phone: e.target.value })
                 }
                 required
               />
@@ -195,12 +293,17 @@ export default function Home() {
                 type="text"
                 className="border-2 border-gray-400 rounded-md px-2 py-1 focus:outline-none focus:border-blue-400"
                 id="companyname"
-                value={newUser.company.name}
+                value={newUser.company.name || editedUser?.company.name || ""}
                 onChange={(e) =>
-                  setNewUser((prevUser) => ({
-                    ...prevUser,
-                    company: { ...prevUser.company, name: e.target.value },
-                  }))
+                  isEditing
+                    ? setEditedUser((prevUser) => ({
+                        ...prevUser,
+                        company: { ...prevUser.company, name: e.target.value },
+                      }))
+                    : setNewUser((prevUser) => ({
+                        ...prevUser,
+                        company: { ...prevUser.company, name: e.target.value },
+                      }))
                 }
                 required
               />
@@ -209,21 +312,36 @@ export default function Home() {
                 type="text"
                 className="border-2 border-gray-400 rounded-md px-2 py-1 focus:outline-none focus:border-blue-400"
                 id="streetaddress"
-                value={newUser.address.street}
+                value={
+                  newUser.address.street || editedUser?.address.street || ""
+                }
                 onChange={(e) =>
-                  setNewUser((prevUser) => ({
-                    ...prevUser,
-                    address: { ...prevUser.address, street: e.target.value },
-                  }))
+                  isEditing
+                    ? setEditedUser((prevUser) => ({
+                        ...prevUser,
+                        address: {
+                          ...prevUser.address,
+                          street: e.target.value,
+                        },
+                      }))
+                    : setNewUser((prevUser) => ({
+                        ...prevUser,
+                        address: {
+                          ...prevUser.address,
+                          street: e.target.value,
+                        },
+                      }))
                 }
                 required
               />
 
               <button
-                className="bg-green-600 rounded-md px-8 py-1 text-white"
+                className={`${
+                  isEditing ? "bg-blue-600" : "bg-green-600"
+                } rounded-md px-4 py-1 text-white`}
                 type="submit"
               >
-                Add
+                {isEditing ? "Update" : "Add"}
               </button>
             </form>
           </div>
