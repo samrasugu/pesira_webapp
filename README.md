@@ -11,7 +11,7 @@ Navigate to the project directory.
 
 Run `npm install` or `yarn add` to install all required packages.
 
-Secondly, run the development server:
+Then, run the development server:
 
 ```bash
 npm run dev
